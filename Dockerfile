@@ -44,7 +44,8 @@ RUN apk add --no-cache \
     php7-tokenizer \
     php7-xmlwriter \
     php7-simplexml \
-    php7-gd
+    php7-gd \
+    php7-fileinfo
 
 # Install GitVersion
 RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.CommandLine.DotNetCore \
