@@ -48,10 +48,11 @@ RUN apk add --no-cache \
     php7-fileinfo\
     php7-dom
 
-# Install GitVersion
-RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.CommandLine.DotNetCore \
-    && unzip /tmp/GitVersion.nupkg -d /usr/local/ 
-RUN echo -e '#!/bin/sh\ndotnet /usr/local/tools/GitVersion.dll $*' > /usr/bin/gv \
+# Install GitVersion 
+RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.CommandLine.DotNetCore/5.0.2-beta1.71 \
+    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
+    && ln -s /usr/local/tools/runtimes/alpine-x64/native/libgit2-7ce88e6.so /usr/lib/git2-7ce88e6.so \
+    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/GitVersion.dll $*' > /usr/bin/gv \
     && chmod +x /usr/bin/gv
 
 # Install Composer
