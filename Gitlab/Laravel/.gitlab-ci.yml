@@ -1,0 +1,105 @@
+image: tomgrv/ci-builder:latest
+
+.init_ssh: &init_ssh |
+  eval $(ssh-agent -s);
+  echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null;
+  mkdir -p ~/.ssh;
+  chmod 700 ~/.ssh;
+  [[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config;
+
+.change_file_permissions: &change_file_permissions |
+  find . -type f -not -path "./vendor/*" -exec chmod 664 {} \; ;
+  find . -type d -not -path "./vendor/*" -exec chmod 775 {} \; ;
+
+.artisan_deploy: &artisan_deploy |
+  cp build.env .env;
+  touch ./database/database.sqlite;
+  echo "Deploying stage ${CI_ENVIRONMENT_SLUG}";
+  php artisan deploy -s ${STRATEGY} -- ${CI_ENVIRONMENT_SLUG};
+
+composer:
+  stage: build
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-composer
+    paths:
+      - vendor/
+  script:
+    - *init_ssh
+    - composer require --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts --dev lorisleiva/laravel-deployer:^0.2
+    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+  artifacts:
+    expire_in: 1 month
+    paths:
+      - vendor/
+
+node:
+  stage: build
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-node
+    paths:
+      - node_modules/
+  script:
+    - *init_ssh
+    - PATH=node_modules/.bin:$PATH
+    - ${NODE_MODULE_MANAGER:-npm} install
+    - ${NODE_MODULE_MANAGER:-npm} run production
+  artifacts:
+    expire_in: 1 month
+    paths:
+      - node_modules/
+      - public/
+
+codestyle:
+  stage: test
+  dependencies:
+    - composer
+  script:
+    - phpcs --no-cache
+
+phpunit:
+  stage: test
+  dependencies:
+    - composer
+  script:
+    - phpunit --coverage-text
+
+beta:
+  stage: deploy
+  variables:
+    STRATEGY: upload
+  script:
+    - *init_ssh
+    - *change_file_permissions
+    - *artisan_deploy
+  environment:
+    name: beta
+    url: http://${HOSTNAME_SERVER_BETA}
+
+staging:
+  stage: deploy
+  variables:
+    STRATEGY: upload
+  script:
+    - *init_ssh
+    - *change_file_permissions
+    - *artisan_deploy
+  environment:
+    name: staging
+    url: http://${HOSTNAME_SERVER_STAGING}
+  only:
+    - master
+
+production:
+  stage: deploy
+  variables:
+    STRATEGY: upload
+  script:
+    - *init_ssh
+    - *change_file_permissions
+    - *artisan_deploy
+  environment:
+    name: production
+    url: http://${HOSTNAME_SERVER_PRODUCTION}
+  when: manual
+  only:
+    - master
