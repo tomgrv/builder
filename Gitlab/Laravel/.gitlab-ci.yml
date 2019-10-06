@@ -17,6 +17,11 @@ image: tomgrv/ci-builder:latest
   echo "Deploying stage ${CI_ENVIRONMENT_SLUG}";
   php artisan deploy -s ${STRATEGY} -- ${CI_ENVIRONMENT_SLUG};
 
+stages:
+  - build
+  - test
+  - deploy
+
 composer:
   stage: build
   cache:
