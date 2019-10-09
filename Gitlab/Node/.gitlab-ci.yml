@@ -4,52 +4,103 @@ image: tomgrv/ci-builder:latest
 
 before_script:
   - npm -g set git-tag-version false
-  - npm install
+  - gv /config $(pwd)/.gitversion.yml > .version.json
+  - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
+  - . ./.version.env
+  - echo ${GitVersion_InformationalVersion}
+
+stages:
+  - build
+  - test
+  - deploy
 
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
 cache:
+  key: ${CI_COMMIT_REF_SLUG}
   paths:
     - node_modules/
+    - dist/
+    - package*.json
 
-#test:lint:
-#  script:
-#    - npm run lint
+# Install Dependencies
+node:
+  stage: build
+  script:
+    - npm install
+    - npm install release-it --no-save
+    - npm version ${GitVersion_SemVer} --allow-same-version
+    - npm run prod
+  artifacts:
+    paths:
+      - package*.json
+      - dist/
 
-#test:vulnerabilities:
-#  script:
-#    - npm run vuln-test
+# Test
+test:
+  stage: test
+  script:
+    - npm run test
 
-# Supported node versions can be found here:
-# https://github.com/nodejs/LTS#lts_schedule
-# jest does not support node < 4
-# https://facebook.github.io/jest/docs/troubleshooting.html#compatibility-issues
-#test:node:6:
-#  script:
-#    - npm install -g codecov
-#    - npm run build
-#    - npm test && codecov
-#
-#test:node:7:
-#  image: node:7
-#  script:
-#    - npm run build
-#    - npm test
-#
-#test:node:4:
-#  image: node:4
-#  script:
-#    - npm run build
-#    - npm test
+# Lint
+lint:
+  stage: test
+  script:
+    - npm run lint
 
-# Publish tagged versions to npm
-publish:
+# Dependencies
+check:
+  stage: test
+  script:
+    - npm install npm-check --no-save
+    - npx npm-check -p
+
+# Release tagged versions to Gitlab/Github
+release-production:
   stage: deploy
   only:
     refs:
+      - tags
       - master
+    variables:
+      - $GITLAB_TOKEN
+      - $GITHUB_TOKEN
   script:
-    - gv /showvariable semver
-    - npm version $(gv /config .gitversion.yml /showvariable semver) --allow-same-version
-    - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'>.npmrc
-    - npm publish
+    - npx release-it ${GitVersion_SemVer} ${GITLAB_TOKEN:+--gitlab.release} ${GITHUB_TOKEN:+--github.release} --no-npm --ci --no-git
+
+# Release tagged versions to Gitlab/Github
+release-staging:
+  stage: deploy
+  only:
+    refs:
+      - /^release/.*$/
+    variables:
+      - $GITLAB_TOKEN
+      - $GITHUB_TOKEN
+  script:
+    - npx release-it ${GitVersion_SemVer} ${GITLAB_TOKEN:+--gitlab.prerelease} ${GITHUB_TOKEN:+--github.prerelease} --no-npm --ci --no-git
+
+# Publish tagged versions to npm
+publish-production:
+  stage: deploy
+  only:
+    refs:
+      - tags
+      - master
+    variables:
+      - $NPM_TOKEN
+  script:
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+    - npx release-it ${GitVersion_SemVer} --ci --no-git
+
+# Publish tagged versions to npm
+publish-staging:
+  stage: deploy
+  only:
+    refs:
+      - /^release/.*$/
+    variables:
+      - $NPM_TOKEN
+  script:
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+    - npx release-it ${GitVersion_SemVer} --npm.tag=${GitVersion_PreReleaseLabel} --ci --no-git
