@@ -17,6 +17,13 @@ image: tomgrv/ci-builder:latest
   echo "Deploying stage ${CI_ENVIRONMENT_SLUG}";
   php artisan deploy -s ${STRATEGY} -- ${CI_ENVIRONMENT_SLUG};
 
+before_script:
+  - npm -g set git-tag-version false
+  - gv /config $(pwd)/.gitversion.yml > .version.json
+  - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
+  - . ./.version.env
+  - echo ${GitVersion_InformationalVersion}
+
 stages:
   - build
   - test
@@ -46,8 +53,8 @@ node:
   script:
     - *init_ssh
     - PATH=node_modules/.bin:$PATH
-    - ${NODE_MODULE_MANAGER:-npm} install
-    - ${NODE_MODULE_MANAGER:-npm} run production
+    - npm install
+    - npm run production
   artifacts:
     expire_in: 1 month
     paths:
