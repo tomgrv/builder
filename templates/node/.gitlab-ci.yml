@@ -26,10 +26,12 @@ cache:
 # Install Dependencies
 node:
   stage: build
+  only:
+    - branches
   script:
     - npm install
     - npm install release-it --no-save
-    - npm version ${GitVersion_SemVer} --allow-same-version
+    - npx env-inject-file --in package.json --out package.json
     - npm run prod
   artifacts:
     paths:
@@ -39,18 +41,24 @@ node:
 # Test
 test:
   stage: test
+  only:
+    - branches
   script:
     - npm run test
 
 # Lint
 lint:
   stage: test
+    only:
+    - branches
   script:
     - npm run lint
 
 # Dependencies
 check:
   stage: test
+  only:
+    - branches
   script:
     - npm install npm-check --no-save
     - npx npm-check -p
@@ -60,7 +68,6 @@ release-production:
   stage: deploy
   only:
     refs:
-      - tags
       - master
     variables:
       - $GITLAB_TOKEN
@@ -85,7 +92,6 @@ publish-production:
   stage: deploy
   only:
     refs:
-      - tags
       - master
     variables:
       - $NPM_TOKEN
