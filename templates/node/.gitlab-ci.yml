@@ -49,7 +49,7 @@ test:
 # Lint
 lint:
   stage: test
-    only:
+  only:
     - branches
   script:
     - npm run lint
