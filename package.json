@@ -1,0 +1,28 @@
+{
+  "name": "ci-builder",
+  "version": "1.0.0",
+  "description": "Alpine 3.8 image with dotnet, node, php7 + Gittools/GitVersion",
+  "main": "Dockerfile",
+  "dependencies": {},
+  "devDependencies": {
+    "cz-conventional-changelog": "^3.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomgrv/ci-builder.git"
+  },
+  "author": "tomgrv",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomgrv/ci-builder/issues"
+  },
+  "homepage": "https://github.com/tomgrv/ci-builder#readme",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
