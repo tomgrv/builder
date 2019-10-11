@@ -1,6 +1,6 @@
 {
   "name": "ci-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Alpine 3.8 image with dotnet, node, php7 + Gittools/GitVersion",
   "main": "Dockerfile",
   "dependencies": {},

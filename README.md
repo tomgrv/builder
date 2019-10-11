@@ -28,3 +28,34 @@ Some variables to set in Gitlab CI variable folder:
 - `HOSTNAME_SERVER_BETA` to deploy `develop` branch automaticaly
 - `HOSTNAME_SERVER_STAGING` to deploy `master` branch automaticaly
 - `HOSTNAME_SERVER_PRODUCTION` to deploy `master` branch **on demand**
+
+### Gitlab / Node
+
+Publishing is handled with [release-it](https://www.npmjs.com/package/release-it) package
+
+File can be referenced within every gitlab project:
+
+```yaml
+include:
+  - project: "tomgrv/ci-builder"
+    ref: master
+    file: "/tempaltes/node/.gitlab-ci.yml"
+```
+
+`Package.json` is parsed for `GitVersion_*` variable replacement before each job:
+
+```json
+{
+  "name": "package-name",
+  "version": "${GitVersion_SemVer}",
+  "description": "This is package Description for version ${GitVersion_InformationalVersion}",
+  "main": "src/index.js",
+  ...
+}
+```
+
+Some variables to set in Gitlab CI variable folder:
+
+- `NPM_TOKEN` to package & publish `master` branch on https://npmjs.com
+- `GITHUB_TOKEN` to package & publish `master` branch on https://github.com automaticaly
+- `GITLAB_TOKEN` to package & publish `master` branch on https://gitlab.com automaticaly
