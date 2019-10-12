@@ -5,8 +5,9 @@ image: tomgrv/ci-builder:latest
 before_script:
   - gv /config $(pwd)/.gitversion.yml > .version.json
   - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_" && . ./.version.env
-  - [ -f package.json ] && npx env-inject-file --in package.json --out package.json
-  - [ -f package.json ] && npm version ${GitVersion_SemVer} --allow-same-version --no-git-tag-version
+  - echo "Working on ${GitVersion_InformationalVersion}"
+  - test -f package.json && npx env-inject-file --in package.json --out package.json
+  - test -f package.json && npx dot-json package.json version ${GitVersion_SemVer}
 
 stages:
   - build
