@@ -3,11 +3,10 @@
 image: tomgrv/ci-builder:latest
 
 before_script:
-  - npm -g set git-tag-version false
   - gv /config $(pwd)/.gitversion.yml > .version.json
-  - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
-  - . ./.version.env
-  - echo ${GitVersion_InformationalVersion}
+  - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_" && . ./.version.env
+  - [ -f package.json ] && npx env-inject-file --in package.json --out package.json
+  - [ -f package.json ] && npm version ${GitVersion_SemVer} --allow-same-version --no-git-tag-version
 
 stages:
   - build
@@ -30,8 +29,6 @@ node:
     - branches
   script:
     - npm install
-    - npm install release-it --no-save
-    - npx env-inject-file --in package.json --out package.json
     - npm run prod
   artifacts:
     paths:
@@ -60,7 +57,6 @@ check:
   only:
     - branches
   script:
-    - npm install npm-check --no-save
     - npx npm-check -p
 
 # Release tagged versions to Gitlab/Github
