@@ -8,6 +8,7 @@ before_script:
   - echo "Working on ${GitVersion_InformationalVersion}"
   - test -f package.json && npx env-inject-file --in package.json --out package.json
   - test -f package.json && npx dot-json package.json version ${GitVersion_SemVer}
+  - env
 
 stages:
   - build
@@ -17,7 +18,7 @@ stages:
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: ${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}
   paths:
     - node_modules/
     - dist/
