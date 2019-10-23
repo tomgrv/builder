@@ -1,4 +1,4 @@
-image: tomgrv/ci-builder:latest
+image: tomgrv/builder:latest
 
 .init_ssh: &init_ssh |
   eval $(ssh-agent -s);
