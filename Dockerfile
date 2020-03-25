@@ -49,16 +49,10 @@ RUN apk add --no-cache \
     php7-dom
 
 # Install GitVersion 
-RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.CommandLine.DotNetCore/5.0.2-beta1.71 \
-    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
-    && ln -s /usr/local/tools/runtimes/alpine-x64/native/libgit2-7ce88e6.so /usr/lib/git2-7ce88e6.so \
-    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/GitVersion.dll $*' > /usr/bin/gv \
-    && chmod +x /usr/bin/gv
+RUN dotnet tool install gitversion --global
 
 # Install Composer
-RUN curl -s https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV PATH="./vendor/bin:$PATH"
+RUN apk add composer
 
 ## Install pecl packages
 #RUN pecl install imagick

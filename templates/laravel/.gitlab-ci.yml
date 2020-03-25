@@ -1,4 +1,4 @@
-image: tomgrv/builder:latest
+image: perspikapps/tools-builder:latest
 
 .init_ssh: &init_ssh |
   eval $(ssh-agent -s);
@@ -13,13 +13,13 @@ image: tomgrv/builder:latest
 
 .artisan_deploy: &artisan_deploy |
   cp build.env .env;
-  touch ./database/database.sqlite;
-  echo "Deploying stage ${CI_ENVIRONMENT_SLUG}";
-  php artisan deploy -s ${STRATEGY} -- ${CI_ENVIRONMENT_SLUG};
+  touch ./storage/app/database.sqlite;
+  echo "Deploying environment ${CI_ENVIRONMENT_SLUG}";
+  php artisan deploy ${CI_ENVIRONMENT_SLUG};
 
 before_script:
   - npm -g set git-tag-version false
-  - gv /config $(pwd)/.gitversion.yml > .version.json
+  - dotnet-gitversion /config $(pwd)/.gitversion.yml > .version.json
   - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
   - . ./.version.env
   - echo ${GitVersion_InformationalVersion}
@@ -77,8 +77,6 @@ phpunit:
 
 beta:
   stage: deploy
-  variables:
-    STRATEGY: upload
   script:
     - *init_ssh
     - *change_file_permissions
@@ -89,8 +87,6 @@ beta:
 
 staging:
   stage: deploy
-  variables:
-    STRATEGY: upload
   script:
     - *init_ssh
     - *change_file_permissions

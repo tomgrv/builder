@@ -10,7 +10,7 @@ Alpine 3.8 image with :
 Available development tools:
 
 - [Composer Package Manager](https://getcomposer.org/) available as `composer`
-- [GitTools/GitVersion](https://github.com/GitTools/GitVersion) available as `gv` (5.0.2-beta1.71)
+- [GitTools/GitVersion](https://github.com/GitTools/GitVersion) available as `dotnet-gitversion` (latest)
 - [squizlabs/PHP_CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer) available as `phpcs`
 - [Node Package Manager](https://www.npmjs.com) available as `npm`
 
