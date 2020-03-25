@@ -1,11 +1,13 @@
 {
-  "name": "ci-builder",
-  "version": "1.0.1",
+  "name": "perspikapps-tools-runner",
+  "version": "1.0.2",
   "description": "Alpine 3.8 image with dotnet, node, php7 + Gittools/GitVersion",
   "main": "Dockerfile",
   "dependencies": {},
   "devDependencies": {
-    "cz-conventional-changelog": "^3.0.2"
+    "cross-env": "^6.0.3",
+    "cz-conventional-changelog": "^3.0.2",
+    "husky": "^3.1.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,6 +25,11 @@
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": ""
     }
   }
 }
