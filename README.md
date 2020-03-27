@@ -1,4 +1,4 @@
-# ci-builder
+# Builder for CI systems
 
 ## Docker image
 
