@@ -42,7 +42,8 @@ RUN apk add --no-cache \
     composer
 
 # Install GitVersion 
-RUN dotnet tool install --global --no-cache gitversion.tool 
+RUN dotnet tool install --global --no-cache gitversion.tool
+ENV PATH="~/.dotnet/tools:${PATH}"
 
 ## Install pecl packages
 #RUN pecl install imagick
