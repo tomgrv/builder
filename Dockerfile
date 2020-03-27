@@ -1,11 +1,11 @@
-FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
+FROM microsoft/dotnet:2.2.104-sdk-alpine3.8
 
 # Install linux dependencies
 RUN apk add --no-cache \
     bash \
     curl \
     git \
-#   imagemagick \
+    #   imagemagick \
     nodejs \
     nodejs-npm \
     ca-certificates \
@@ -49,7 +49,7 @@ RUN apk add --no-cache \
     php7-dom
 
 # Install GitVersion 
-RUN dotnet tool install gitversion --global
+RUN dotnet tool install gitversion.tool -g
 
 # Install Composer
 RUN apk add composer
