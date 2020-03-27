@@ -3,22 +3,11 @@ FROM microsoft/dotnet:2.2.104-sdk-alpine3.8
 # Install linux dependencies
 RUN apk add --no-cache \
     bash \
-    curl \
     git \
-    #   imagemagick \
     nodejs \
     nodejs-npm \
     ca-certificates \
-    unzip \
-    readline \
     openssh-client
-
-## Install devpmt dependencies
-#RUN apk add --no-cache \
-#    make \
-#    gcc \
-#    g++ \
-#    libc-dev
 
 # Install php dependencies
 RUN apk add --no-cache \
@@ -48,11 +37,12 @@ RUN apk add --no-cache \
     php7-fileinfo\
     php7-dom
 
-# Install GitVersion 
-RUN dotnet tool install gitversion.tool -g
-
 # Install Composer
-RUN apk add composer
+RUN apk add --no-cache \
+    composer
+
+# Install GitVersion 
+RUN dotnet tool install --global --no-cache gitversion.tool 
 
 ## Install pecl packages
 #RUN pecl install imagick
