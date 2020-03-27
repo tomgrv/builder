@@ -4,6 +4,7 @@
   "description": "Alpine 3.8 image with dotnet sdk, node, php7 + Gittools/GitVersion",
   "main": "Dockerfile",
   "dependencies": {
+    "gitversion-tool": "file:../tomgrv-gitversion-tool",
     "husky": "^4.2.3"
   },
   "devDependencies": {
@@ -11,7 +12,8 @@
     "cz-conventional-changelog": "^3.0.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "verify": "gitversion-helper -h"
   },
   "repository": {
     "type": "git",
