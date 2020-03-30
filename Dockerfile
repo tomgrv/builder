@@ -12,7 +12,7 @@ RUN apk update && apk add --no-cache \
     nodejs-npm \
     ca-certificates \   
     openssh-client \
-    util-linux
+    util-linux && node --version
 
 # Install php dependencies
 RUN apk add --no-cache \
