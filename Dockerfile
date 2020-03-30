@@ -53,7 +53,7 @@ RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersio
     && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
     && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll '$*' > /usr/bin/gitversion \
     && chmod +x /usr/bin/gitversion \
-    && gitversion --version
+    && gitversion /version
 
 ## Install PHPUnit
 RUN wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT}.phar \
