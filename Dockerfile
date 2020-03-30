@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
+FROM mcr.microsoft.com/dotnet/core/runtime:2.1-alpine
 
 ARG GITVERSION=5.2.4
 ARG PHPUNIT=8
