@@ -1,6 +1,7 @@
 FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
 
 ARG GITVERSION=5.2.4
+ARG PHPUNIT=8
 ARG DOTNET_FW=netcoreapp2.1
 
 # Install linux dependencies
@@ -51,13 +52,17 @@ RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersio
     && ln -s /usr/local/tools/${DOTNET_FW}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
     && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
     && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll '$*' > /usr/bin/gitversion \
-    && chmod +x /usr/bin/gitversion
+    && chmod +x /usr/bin/gitversion \
+    && gitversion --version
 
-## Install pecl packages
-#RUN pecl install imagick
+## Install PHPUnit
+RUN wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT}.phar \
+    && chmod +x /usr/bin/phpunit  \
+    && phpunit --version
 
 # Install pear packages
-RUN pear install PHP_CodeSniffer
+RUN pear install PHP_CodeSniffer \
+    && phpcs --version
 
 # Setup working directory
 WORKDIR /var/run
