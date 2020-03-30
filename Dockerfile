@@ -1,6 +1,6 @@
 FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
 
-ARG GITVERSION_RELEASE 5.2.4
+ARG GITVERSION_RELEASE=5.2.4
 
 # Install linux dependencies
 RUN apk add --no-cache \
