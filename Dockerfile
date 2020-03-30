@@ -9,8 +9,8 @@ RUN apk add --no-cache \
     git \
     nodejs \
     nodejs-npm \
-    ca-certificates \
-    openssh-client \
+      ca-certificates \   
+    nssh-client \
     util-linux
 
 # Install php dependencies
@@ -50,7 +50,7 @@ RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersio
     && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
     && ln -s /usr/local/tools/${DOTNET_FW}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
     && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
-    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll $*' > /usr/bin/gitversion \
+    && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll '$*' > /usr/bin/gitversion \
     && chmod +x /usr/bin/gitversion
 
 ## Install pecl packages
