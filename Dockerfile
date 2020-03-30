@@ -1,6 +1,7 @@
 FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
 
-ARG GITVERSION_RELEASE=5.2.4
+ARG GITVERSION=5.2.4
+ARG DOTNET_FW=netcoreapp2.1
 
 # Install linux dependencies
 RUN apk add --no-cache \
@@ -45,11 +46,11 @@ RUN apk add --no-cache \
     composer
 
 # Install GitVersion
-RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITVERSION_RELEASE} \
+RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITVERSION} \
     && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
-    && ln -s /usr/local/tools/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
+    && ln -s /usr/local/tools/${DOTNET_FW}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
     && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
-    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/netcoreapp2.1/any/gitversion.dll $*' > /usr/bin/gitversion \
+    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll $*' > /usr/bin/gitversion \
     && chmod +x /usr/bin/gitversion
 
 ## Install pecl packages
