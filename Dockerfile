@@ -5,7 +5,7 @@ ARG PHPUNIT=8
 ARG DOTNET_FW=netcoreapp2.1
 
 # Install linux dependencies
-RUN apk update && add --no-cache \
+RUN apk update && apk add --no-cache \
     bash \
     git \
     nodejs \
