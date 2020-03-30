@@ -5,14 +5,14 @@ ARG PHPUNIT=8
 ARG DOTNET_FW=netcoreapp2.1
 
 # Install linux dependencies
-RUN apk update && apk add --no-cache \
+RUN apk add --no-cache \
     bash \
     git \
     nodejs \
     nodejs-npm \
     ca-certificates \   
     openssh-client \
-    util-linux && node --version
+    util-linux
 
 # Install php dependencies
 RUN apk add --no-cache \
@@ -40,7 +40,8 @@ RUN apk add --no-cache \
     php7-simplexml \
     php7-gd \
     php7-fileinfo\
-    php7-dom
+    php7-dom \
+    php7-session 
 
 # Install Composer
 RUN apk add --no-cache \
