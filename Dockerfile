@@ -1,4 +1,6 @@
-FROM microsoft/dotnet:2.2.104-sdk-alpine3.8
+FROM microsoft/dotnet:2.2.2-runtime-alpine3.8
+
+ARG GITVERSION_RELEASE 5.2.4
 
 # Install linux dependencies
 RUN apk add --no-cache \
@@ -7,7 +9,8 @@ RUN apk add --no-cache \
     nodejs \
     nodejs-npm \
     ca-certificates \
-    openssh-client
+    openssh-client \
+    util-linux
 
 # Install php dependencies
 RUN apk add --no-cache \
@@ -41,9 +44,13 @@ RUN apk add --no-cache \
 RUN apk add --no-cache \
     composer
 
-# Install GitVersion 
-RUN dotnet tool install --global --no-cache gitversion.tool
-ENV PATH="~/.dotnet/tools:${PATH}"
+# Install GitVersion
+RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITVERSION_RELEASE} \
+    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
+    && ln -s /usr/local/tools/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
+    && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
+    && echo -e '#!/bin/sh\ndotnet /usr/local/tools/netcoreapp2.1/any/gitversion.dll $*' > /usr/bin/gitversion \
+    && chmod +x /usr/bin/gitversion
 
 ## Install pecl packages
 #RUN pecl install imagick
