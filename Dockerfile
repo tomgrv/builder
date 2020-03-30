@@ -9,8 +9,8 @@ RUN apk add --no-cache \
     git \
     nodejs \
     nodejs-npm \
-      ca-certificates \   
-    nssh-client \
+    ca-certificates \   
+    openssh-client \
     util-linux
 
 # Install php dependencies
