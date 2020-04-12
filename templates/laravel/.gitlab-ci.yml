@@ -19,7 +19,7 @@ image: tomgrv/ci-builder:stable
     - php artisan key:generate
 
 .artisan_deploy: &artisan_deploy
-    - php artisan deploy --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vvv
+    - php artisan deploy --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vv
 
 .composer_clean: &composer_clean
     - composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev
@@ -83,18 +83,6 @@ phpunit:
     script:
         - *artisan_init
         - phpunit --coverage-text
-
-alpha:
-    stage: deploy
-    script:
-        - *init_ssh
-        - *change_file_permissions
-        - *artisan_init
-        - *artisan_deploy
-    environment:
-        name: alpha
-    only:
-        - develop
 
 beta:
     stage: deploy
