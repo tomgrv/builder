@@ -8,6 +8,7 @@ ARG DOTNET_FW=netcoreapp2.1
 RUN apk add --no-cache \
     bash \
     git \
+    rsync \
     nodejs \
     nodejs-npm \
     ca-certificates \   
@@ -46,6 +47,13 @@ RUN apk add --no-cache \
 # Install Composer
 RUN apk add --no-cache \
     composer
+
+
+# Install Developpent tools
+#RUN apk add --no-cache \
+#    python \
+#    make \
+#    g++
 
 # Install GitVersion
 RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITVERSION} \
