@@ -1,113 +1,135 @@
+# @format
+
 image: tomgrv/ci-builder:stable
 
-.init_ssh: &init_ssh |
-  eval $(ssh-agent -s);
-  echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null;
-  mkdir -p ~/.ssh;
-  chmod 700 ~/.ssh;
-  [[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config;
+.init_ssh: &init_ssh
+    - eval $(ssh-agent -s)
+    - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - if test -f /.dockerenv; then echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config; fi
 
-.change_file_permissions: &change_file_permissions |
-  find . -type f -not -path "./vendor/*" -exec chmod 664 {} \; ;
-  find . -type d -not -path "./vendor/*" -exec chmod 775 {} \; ;
+.change_file_permissions: &change_file_permissions
+    - find . -type f -not -path "./vendor/*" -exec chmod 664 {} \;
+    - find . -type d -not -path "./vendor/*" -exec chmod 775 {} \;
 
-.artisan_deploy: &artisan_deploy |
-  cp build.env .env;
-  touch ./storage/app/database.sqlite;
-  echo "Deploying environment ${CI_ENVIRONMENT_SLUG}";
-  php artisan deploy ${CI_ENVIRONMENT_SLUG};
+.artisan_init: &artisan_init
+    - if test -f .env.build; then cp .env.build .env; else echo -e "APP_KEY=\nDB_CONNECTION=sqlite\nDB_DATABASE=storage/app/db" > .env; fi
+    - touch $(awk 'BEGIN { FS = "=" } /DB_DATABASE/ { print $2; }' .env)
+    - php artisan key:generate
+
+.artisan_deploy: &artisan_deploy
+    - php artisan deploy --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vvv
+
+.composer_clean: &composer_clean
+    - composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev
+
+.gitversion: &gitversion
+    - gitversion /diag /nocache
+    - if test -f .gitversion.yml; then gitversion /nocache /config .gitversion.yml; else gitversion /nocache; fi > .version.json
+    - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
+    - source .version.env
+    - echo ${GitVersion_InformationalVersion}
 
 before_script:
-  - npm -g set git-tag-version false
-  - dotnet-gitversion /config $(pwd)/.gitversion.yml > .version.json
-  - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
-  - . ./.version.env
-  - echo ${GitVersion_InformationalVersion}
+    - npm -g set git-tag-version false
+    - *gitversion
 
 stages:
-  - build
-  - test
-  - deploy
+    - build
+    - test
+    - deploy
 
 composer:
-  stage: build
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-composer
-    paths:
-      - vendor/
-  script:
-    - *init_ssh
-    - composer require --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts --dev lorisleiva/laravel-deployer:^0.2
-    - composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
-  artifacts:
-    expire_in: 1 month
-    paths:
-      - vendor/
+    stage: build
+    cache:
+        key: ${CI_COMMIT_REF_SLUG}-composer
+        paths:
+            - vendor/
+    script:
+        - *init_ssh
+        - composer install --prefer-dist --no-interaction --no-progress --no-suggest
+
+    artifacts:
+        expire_in: 1 month
+        paths:
+            - vendor/
 
 node:
-  stage: build
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-node
-    paths:
-      - node_modules/
-  script:
-    - *init_ssh
-    - PATH=node_modules/.bin:$PATH
-    - npm install
-    - npm run production
-  artifacts:
-    expire_in: 1 month
-    paths:
-      - node_modules/
-      - public/
+    stage: build
+    cache:
+        key: ${CI_COMMIT_REF_SLUG}-node
+        paths:
+            - node_modules/
+    script:
+        - *init_ssh
+        - PATH=node_modules/.bin:$PATH
+        - npm install
+        - npm run production
+    artifacts:
+        expire_in: 1 month
+        paths:
+            - node_modules/
+            - public/
 
 codestyle:
-  stage: test
-  dependencies:
-    - composer
-  script:
-    - phpcs --no-cache
+    stage: test
+    script:
+        - phpcs --no-cache
+        - npx prettier --ignore-path ./.gitignore --require-pragma --check .
 
 phpunit:
-  stage: test
-  dependencies:
-    - composer
-  script:
-    - phpunit --coverage-text
+    stage: test
+    script:
+        - *artisan_init
+        - phpunit --coverage-text
+
+alpha:
+    stage: deploy
+    script:
+        - *init_ssh
+        - *change_file_permissions
+        - *artisan_init
+        - *artisan_deploy
+    environment:
+        name: alpha
+    only:
+        - develop
 
 beta:
-  stage: deploy
-  script:
-    - *init_ssh
-    - *change_file_permissions
-    - *artisan_deploy
-  environment:
-    name: beta
-    url: http://${HOSTNAME_SERVER_BETA}
+    stage: deploy
+    script:
+        - *init_ssh
+        - *change_file_permissions
+        - *artisan_init
+        - *artisan_deploy
+    environment:
+        name: beta
+    only:
+        - develop
 
 staging:
-  stage: deploy
-  script:
-    - *init_ssh
-    - *change_file_permissions
-    - *artisan_deploy
-  environment:
-    name: staging
-    url: http://${HOSTNAME_SERVER_STAGING}
-  only:
-    - master
+    stage: deploy
+    script:
+        - *init_ssh
+        - *change_file_permissions
+        - *composer_clean
+        - *artisan_init
+        - *artisan_deploy
+    environment:
+        name: staging
+    only:
+        - release
 
 production:
-  stage: deploy
-  variables:
-    STRATEGY: upload
-  script:
-    - *init_ssh
-    - *change_file_permissions
-    - *artisan_deploy
-  environment:
-    name: production
-    url: http://${HOSTNAME_SERVER_PRODUCTION}
-  when: manual
-  only:
-    - master
+    stage: deploy
+    script:
+        - *init_ssh
+        - *change_file_permissions
+        - *composer_clean
+        - *artisan_init
+        - *artisan_deploy
+    environment:
+        name: production
+    only:
+        - master
