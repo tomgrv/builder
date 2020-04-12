@@ -108,3 +108,4 @@ publish-staging:
   script:
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
     - npx release-it ${GitVersion_SemVer} --npm.tag=${GitVersion_PreReleaseLabel} --ci --no-git
+
