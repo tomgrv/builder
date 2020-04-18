@@ -1,24 +1,27 @@
 {
     "name": "tomgrv-ci-builder",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "description": "Alpine 3.8 image with dotnet sdk, node, php7 + Gittools/GitVersion",
     "main": "Dockerfile",
     "dependencies": {},
     "devDependencies": {
         "@commitlint/cli": "^8.3.5",
         "@commitlint/config-conventional": "^8.3.4",
+        "@commitlint/core": "^8.3.5",
+        "commitizen": "^4.0.4",
+        "commitlint-config-gitmoji": "github:arvinxx/commitlint-config-gitmoji",
+        "conventional-changelog-cli": "^2.0.31",
         "cross-env": "^6.0.3",
         "cz-conventional-changelog": "^3.0.2",
+        "cz-emoji": "^1.2.1",
         "git-precommit-checks": "^3.0.3",
         "husky": "^4.2.5",
         "lint-staged": "^10.1.3",
-        "precise-commits": "^1.0.2",
         "prettier": "^2.0.4"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "verify": "gitversion-helper -h",
-        "init-ci": "npm i --save-dev @commitlint/cli @commitlint/config-conventional git-precommit-checks husky lint-staged precise-commits prettier",
         "postinstall": "npm dedupe"
     },
     "repository": {
@@ -31,21 +34,24 @@
         "url": "https://github.com/tomgrv/ci-builder/issues"
     },
     "homepage": "https://github.com/tomgrv/ci-builder#readme",
+    "peerDependencies": {
+        "@commitlint/lint": ">=7.6.0"
+    },
     "config": {
         "commitizen": {
-            "path": "cz-conventional-changelog"
+            "path": "cz-emoji"
         }
     },
     "husky": {
         "hooks": {
             "pre-commit": "git-precommit-checks && lint-staged",
-            "prepare-commit-msg": "[[ $(grep -cv -e '^#' -e '^$' .git/COMMIT_EDITMSG) -eq 0 ]] && (exec < /dev/tty && git cz --hook || true) || true",
+            "prepare-commit-msg": "[[ $(grep -cv -e '^#' -e '^$' .git/COMMIT_EDITMSG) -eq 0 ]] && (exec < /dev/tty && git-cz --hook || true) || true",
             "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
         }
     },
     "lint-staged": {
-        "!(*.php)": [
-            "precise-commits"
+        "*.{js,jsx,ts,tsx,md,html,css, json}": [
+            "prettier --write"
         ],
         "*.php": [
             "./vendor/bin/phpcbf -a -p"
@@ -53,8 +59,19 @@
     },
     "commitlint": {
         "extends": [
-            "@commitlint/config-conventional"
-        ]
+            "gitmoji"
+        ],
+        "parserPreset": {
+            "parserOpts": {
+                "headerPattern": "^(:\\w*:)(?:\\s)(?:\\((.*?)\\))?\\s((?:.*(?=\\())|.*)(?:\\(#(\\d*)\\))?",
+                "headerCorrespondence": [
+                    "type",
+                    "scope",
+                    "subject",
+                    "ticket"
+                ]
+            }
+        }
     },
     "git-precommit-checks": {
         "rules": [
@@ -68,5 +85,12 @@
                 "regex": "(?:FIXME|TODO)"
             }
         ]
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4,
+        "semi": false,
+        "singleQuote": true,
+        "insertPragma": true
     }
 }
