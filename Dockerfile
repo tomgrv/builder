@@ -4,7 +4,7 @@ ARG PHPUNIT_VERSION=8
 ARG DOTNETFW_VERSION=2.1
 
 # Image
-FROM mcr.microsoft.com/dotnet/core/runtime:${DOTNETFW_VERSION}-alpine
+FROM mcr.microsoft.com/dotnet/core/sdk:${DOTNETFW_VERSION}-alpine
 
 # Install linux dependencies
 RUN apk add --no-cache \
@@ -58,13 +58,18 @@ RUN apk add --no-cache \
 #    g++
 
 # Install GitVersion
-RUN wget -O /tmp/GitVersion.nupkg "https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITTOOL_VERSION}" \
-    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
-    && ln -s /usr/local/tools/netcoreapp${DOTNETFW_VERSION}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
-    && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
-    && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/netcoreapp${DOTNETFW_VERSION}/any/gitversion.dll '$*' > /usr/bin/${GITTOOL_EXECUTABLE} \
-    && chmod +x /usr/bin/${GITTOOL_EXECUTABLE} \
-    && ${GITTOOL_EXECUTABLE} /version
+RUN dotnet tool install -g --version "${GITTOOL_VERSION}" gitversion.tool \
+    && /root/.dotnet/tools/dotnet-gitversion /version
+
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+#RUN wget -O /tmp/GitVersion.nupkg "https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITTOOL_VERSION}" \
+#    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
+#    && ln -s /usr/local/tools/netcoreapp${DOTNETFW_VERSION}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
+#    && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
+#    && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/netcoreapp${DOTNETFW_VERSION}/any/gitversion.dll '$*' > /usr/bin/${GITTOOL_EXECUTABLE} \
+#    && chmod +x /usr/bin/${GITTOOL_EXECUTABLE} \
+#    && ${GITTOOL_EXECUTABLE} /version
 
 ## Install PHPUnit
 RUN wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar \
