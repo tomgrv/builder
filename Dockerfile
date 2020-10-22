@@ -72,7 +72,7 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 #    && ${GITTOOL_EXECUTABLE} /version
 
 ## Install PHPUnit
-RUN wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar \
+RUN wget -O /usr/bin/phpunit "https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar" \
     && chmod +x /usr/bin/phpunit  \
     && phpunit --version
 
