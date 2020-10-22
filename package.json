@@ -1,6 +1,6 @@
 {
     "name": "tomgrv-ci-builder",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "description": "Alpine 3.8 image with dotnet sdk, node, php7 + Gittools/GitVersion",
     "main": "Dockerfile",
     "author": "tomgrv",
