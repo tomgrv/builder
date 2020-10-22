@@ -1,8 +1,12 @@
-FROM mcr.microsoft.com/dotnet/core/runtime:2.1-alpine
+# Image args
+ARG DOTNET_VERSION=2.1
 
-ARG GITVERSION=5.2.4
-ARG PHPUNIT=8
-ARG DOTNET_FW=netcoreapp2.1
+# Image
+FROM mcr.microsoft.com/dotnet/core/sdk:$DOTNET_VERSION-alpine
+
+# Tools args
+ARG GITTOOL_VERSION=5.3.7
+ARG PHPUNIT_VERSION=8
 
 # Install linux dependencies
 RUN apk add --no-cache \
@@ -49,7 +53,6 @@ RUN apk add --no-cache \
 RUN apk add --no-cache \
     composer
 
-
 # Install Developpent tools
 #RUN apk add --no-cache \
 #    python \
@@ -57,16 +60,13 @@ RUN apk add --no-cache \
 #    g++
 
 # Install GitVersion
-RUN wget -O /tmp/GitVersion.nupkg https://www.nuget.org/api/v2/package/GitVersion.Tool/${GITVERSION} \
-    && unzip /tmp/GitVersion.nupkg -d /usr/local/ \
-    && ln -s /usr/local/tools/${DOTNET_FW}/any/runtimes/alpine-x64/native/libgit2-*.so /usr/lib \
-    && rename 'libgit2-' 'git2-' /usr/lib/libgit2-*  \
-    && echo -e '#!/bin/sh\n' dotnet /usr/local/tools/${DOTNET_FW}/any/gitversion.dll '$*' > /usr/bin/gitversion \
-    && chmod +x /usr/bin/gitversion \
-    && gitversion /version
+RUN dotnet tool install -g --version "${GITTOOL_VERSION}" gitversion.tool \
+    && /root/.dotnet/tools/dotnet-gitversion /version
+
+ENV PATH="${PATH}:/root/.dotnet/tools"
 
 ## Install PHPUnit
-RUN wget -O /usr/bin/phpunit https://phar.phpunit.de/phpunit-${PHPUNIT}.phar \
+RUN wget -O /usr/bin/phpunit "https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar" \
     && chmod +x /usr/bin/phpunit  \
     && phpunit --version
 
