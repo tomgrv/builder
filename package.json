@@ -26,7 +26,6 @@
         "env-cmd": "^10.1.0",
         "git-precommit-checks": "^3.0.6",
         "husky": "^4.3.0",
-        "laravel-mix": "^5.0.7",
         "lint-staged": "^10.4.2",
         "npm-run-all": "^4.1.5",
         "prettier": "^2.1.2",
@@ -55,13 +54,13 @@
         "git:version:install": "dotnet tool install -g gitversion.tool",
         "git:version:shell": "dotnet-gitversion > .git/version.json && env-cmd -f .git/version.json -x cross-env-shell",
         "git:feature:start": "cross-env git flow feature start",
-        "git:feature:finish": "npm run git:version:shell -- npm run release:as $SemVer && git flow feature finish",
-        "git:release:start": "npm run git:version:shell -- git flow release start $MajorMinorPatch",
-        "git:release:finish": "npm run git:version:shell -- npm run release:as $MajorMinorPatch && git flow release finish -T $MajorMinorPatch -m Release",
+        "git:feature:finish": "npm run git:version:shell -- 'npm run release:as $SemVer && git flow feature finish'",
+        "git:release:start": "npm run git:version:shell -- 'git flow release start $MajorMinorPatch'",
+        "git:release:finish": "npm run git:version:shell -- 'npm run release:as $MajorMinorPatch && git flow release finish -T $MajorMinorPatch -m Release'",
         "git:hotfix:start": "cross-env git flow hotfix start from-$npm_package_version",
-        "git:hotfix:finish": "npm run git:version:shell -- npm run release:as $MajorMinorPatch && git flow hotfix finish -T $MajorMinorPatch -m Hotfix",
+        "git:hotfix:finish": "npm run git:version:shell -- 'npm run release:as $MajorMinorPatch && git flow hotfix finish -T $MajorMinorPatch -m Hotfix'",
         "git:bugfix:start": "cross-env git flow bugfix start",
-        "git:bugfix:finish": "npm run git:version:shell -- npm run release:as $SemVer && git flow bugfix finish"
+        "git:bugfix:finish": "npm run git:version:shell -- 'npm run release:as $SemVer && git flow bugfix finish'"
     },
     "subPackages": [],
     "config": {
