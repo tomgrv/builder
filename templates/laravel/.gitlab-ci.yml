@@ -22,11 +22,11 @@ image: tomgrv/ci-builder:stable
     - php artisan deploy --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vv
 
 .composer_clean: &composer_clean
-    - composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev
+    - COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev
 
 .gitversion: &gitversion
-    - gitversion /diag /nocache
-    - if test -f .gitversion.yml; then gitversion /nocache /config .gitversion.yml; else gitversion /nocache; fi > .version.json
+    - dotnet-gitversion /diag /nocache
+    - if test -f .gitversion.yml; then dotnet-gitversion /nocache /config .gitversion.yml; else dotnet-gitversion /nocache; fi > .version.json
     - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
     - source .version.env
     - echo ${GitVersion_InformationalVersion}
@@ -48,7 +48,7 @@ composer:
             - vendor/
     script:
         - *init_ssh
-        - composer install --prefer-dist --no-interaction --no-progress --no-suggest
+        - COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction --no-progress --no-suggest
 
     artifacts:
         expire_in: 1 month
@@ -73,9 +73,9 @@ node:
             - public/
 
 codestyle:
-    stage: test
+    stage: lint
     script:
-        - phpcs --no-cache
+        - COMPOSER_MEMORY_LIMIT=-1 composer lint-check .
         - npx prettier --ignore-path ./.gitignore --require-pragma --check .
 
 phpunit:
