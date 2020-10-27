@@ -47,7 +47,8 @@ RUN apk add --no-cache \
     php7-fileinfo\
     php7-dom \
     php7-session \
-    php7-bcmath
+    php7-bcmath \
+    php7-ctype
 
 # Install Composer
 RUN apk add --no-cache \
