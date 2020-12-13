@@ -5,7 +5,7 @@ ARG DOTNET_VERSION=2.1
 FROM mcr.microsoft.com/dotnet/core/sdk:$DOTNET_VERSION-alpine
 
 # Tools args
-ARG GITTOOL_VERSION=5.3.7
+ARG GITTOOL_VERSION=5.5.1
 ARG PHPUNIT_VERSION=8
 
 # Install linux dependencies
