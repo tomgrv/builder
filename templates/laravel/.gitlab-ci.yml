@@ -1,6 +1,6 @@
 # @format
 
-image: tomgrv/ci-builder:3.2.1
+image: tomgrv/ci-builder:3.3.0
 
 .init_ssh: &init_ssh
     - eval $(ssh-agent -s)
