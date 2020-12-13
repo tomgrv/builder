@@ -1,6 +1,6 @@
 # @format
 
-image: tomgrv/ci-builder:stable
+image: tomgrv/ci-builder:3.2.1
 
 .init_ssh: &init_ssh
     - eval $(ssh-agent -s)
@@ -19,26 +19,77 @@ image: tomgrv/ci-builder:stable
     - php artisan key:generate
 
 .artisan_deploy: &artisan_deploy
-    - php artisan deploy --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vv
+    - typeset var USERNAME=${GITLAB_USER_LOGIN}
+    - php artisan deploy --option gitversion_enabled=true --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vv
+
+.artisan_unlock: &artisan_unlock
+    - typeset var USERNAME=${GITLAB_USER_LOGIN}
+    - php artisan deploy:run deploy:unlock --no-interaction --branch=${CI_COMMIT_REF_NAME} ${CI_ENVIRONMENT_SLUG} -vv
+
+.composer_install: &composer_install
+    - composer install --prefer-dist --no-interaction --no-progress --no-suggest
 
 .composer_clean: &composer_clean
-    - COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev
+    - composer install --prefer-dist --no-interaction --no-progress --no-suggest --no-dev --optimize-autoloader
 
 .gitversion: &gitversion
-    - dotnet-gitversion /diag /nocache
-    - if test -f .gitversion.yml; then dotnet-gitversion /nocache /config .gitversion.yml; else dotnet-gitversion /nocache; fi > .version.json
+    - dotnet-gitversion
+    - if test -f .gitversion.yml; then dotnet-gitversion /config .gitversion.yml; else dotnet-gitversion; fi > .version.json
     - npx convert-json-env .version.json --out .version.env --prefix="export GitVersion_"
     - source .version.env
     - echo ${GitVersion_InformationalVersion}
 
+.deploy: &deploy
+    stage: deploy
+    variables:
+        DEFAULT_USER_EMAIL: ${GITLAB_USER_EMAIL}
+        DEFAULT_USER_NAME: ${GITLAB_USER_NAME}
+    script:
+        - *init_ssh
+        - *composer_clean
+        - *change_file_permissions
+        - *artisan_init
+        - *artisan_deploy
+
+.unlock: &unlock
+    stage: deploy
+    needs:
+        - composer
+    script:
+        - *init_ssh
+        - *artisan_init
+        - *artisan_unlock
+    allow_failure: true
+
 before_script:
     - npm -g set git-tag-version false
-    - *gitversion
+    - if test -f .version.env; then source .version.env; fi
+    - echo ${GitVersion_InformationalVersion}
+
+variables:
+    COMPOSER_MEMORY_LIMIT: '-1'
+    GIT_DEPTH: 0
+
+workflow:
+    rules:
+        - if: $CI_MERGE_REQUEST_IID
+        - if: $CI_COMMIT_BRANCH
 
 stages:
+    - prepare
     - build
-    - test
+    - quality
     - deploy
+
+checkout:
+    stage: prepare
+    script:
+        - *gitversion
+        - echo ${GitVersion_FullSemVer} > VERSION
+    artifacts:
+        paths:
+            - VERSION
+            - .version.env
 
 composer:
     stage: build
@@ -47,13 +98,14 @@ composer:
         paths:
             - vendor/
     script:
-        - *init_ssh
-        - COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction --no-progress --no-suggest
-
+        - *composer_install
+    rules:
+        - exists:
+            - composer.json
     artifacts:
-        expire_in: 1 month
         paths:
             - vendor/
+    interruptible: true
 
 node:
     stage: build
@@ -61,63 +113,116 @@ node:
         key: ${CI_COMMIT_REF_SLUG}-node
         paths:
             - node_modules/
-    script:
-        - *init_ssh
-        - PATH=node_modules/.bin:$PATH
-        - npm install
-        - npm run production
-    artifacts:
-        expire_in: 1 month
-        paths:
-            - node_modules/
             - public/
+    script:
+        - PATH=node_modules/.bin:$PATH
+        - npm install --unsafe-perm --silent
+        - npm run production --silent
+    rules:
+        - exists:
+              - package.json
+    artifacts:
+        paths:
+            - public/css/
+            - public/js/
+            - public/images/
+            - public/modules/
+            - public/mix-manifest.json
+    interruptible: true
 
 codestyle:
-    stage: lint
+    stage: quality
     script:
-        - COMPOSER_MEMORY_LIMIT=-1 composer lint-check .
-        - npx prettier --ignore-path ./.gitignore --require-pragma --check .
+        - ls -la
+        - composer lint-check .
+        - npx prettier --ignore-path ./.gitignore --require-pragma --check '**/*.{js,jsx,ts,tsx,md,html,css}'
+    interruptible: true
 
 phpunit:
-    stage: test
+    stage: quality
     script:
-        - *artisan_init
         - phpunit --coverage-text
+    dependencies:
+        - composer
+    rules:
+        - if: '$CI_PROJECT_NAMESPACE !~ /template/ && $CI_PROJECT_NAME !~ /template/'
+          exists:
+              - phpunit.xml
+    interruptible: true
 
-beta:
-    stage: deploy
-    script:
-        - *init_ssh
-        - *change_file_permissions
-        - *artisan_init
-        - *artisan_deploy
+devpmt:
+    <<: *deploy
     environment:
-        name: beta
-    only:
-        - develop
+        name: devpmt
+        url: https://${DEPLOY_BETA}
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^feature/'
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+
+devpmt-unlock:
+    <<: *unlock
+    environment:
+        name: devpmt
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^feature/'
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+          when: manual
 
 staging:
-    stage: deploy
-    script:
-        - *init_ssh
-        - *change_file_permissions
-        - *composer_clean
-        - *artisan_init
-        - *artisan_deploy
+    <<: *deploy
     environment:
         name: staging
-    only:
-        - release
+        url: https://${DEPLOY_STAGING}
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /^release/'
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+
+staging-unlock:
+    <<: *unlock
+    environment:
+        name: staging
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /^release/'
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+          when: manual
 
 production:
-    stage: deploy
-    script:
-        - *init_ssh
-        - *change_file_permissions
-        - *composer_clean
-        - *artisan_init
-        - *artisan_deploy
+    <<: *deploy
     environment:
         name: production
-    only:
-        - master
+        url: https://${DEPLOY_PRODUCTION}
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "main"'
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+          when: manual
+
+production-unlock:
+    <<: *unlock
+    environment:
+        name: production
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "main"'
+          when: manual
+          exists:
+              - artisan
+              - composer.json
+              - app/config/deploy.php
+          when: manual
+
+
+

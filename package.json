@@ -19,19 +19,20 @@
         "@commitlint/config-conventional": "^11.0.0",
         "@commitlint/core": "^11.0.0",
         "commitiquette": "^1.0.8",
-        "commitizen": "^4.2.1",
-        "conventional-changelog-cli": "^2.1.0",
+        "commitizen": "^4.2.2",
+        "conventional-changelog-cli": "^2.1.1",
         "cross-env": "^7.0",
-        "devmoji": "^2.1.10",
+        "devmoji": "^2.1.13",
         "env-cmd": "^10.1.0",
         "git-precommit-checks": "^3.0.6",
-        "husky": "^4.3.0",
-        "laravel-mix": "^5.0.7",
-        "lint-staged": "^10.4.2",
+        "husky": "^4.3.6",
+        "laravel-mix": "^5.0.9",
+        "lint-staged": "^10.5.3",
         "npm-run-all": "^4.1.5",
-        "prettier": "^2.1.2",
+        "prettier": "^2.2.1",
         "standard-version": "^9.0.0",
-        "subpkg": "^4.0.1"
+        "subpkg": "^4.1.0",
+        "chalk-cli": "^4.1.0"
     },
     "peerDependencies": {
         "ntl": "^5.1.0",
@@ -39,29 +40,44 @@
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "lint": "cross-env prettier --ignore-path ./.gitignore --write '**/*.{js,jsx,ts,tsx,md,html,css,json,vue}'",
+        "dev": "npm run development",
+        "development": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress  --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "postdevelopment": "subpkg run development",
+        "watch": "npm run development -- --watch",
+        "watch-poll": "npm run watch -- --watch-poll",
+        "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --disable-host-check --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "prod": "npm run production",
+        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "postproduction": "subpkg production",
+        "maildev": "maildev -o -s 3025 -w 3080",
+        "lint": "lint-staged",
         "postlint": "subpkg run lint",
-        "postinstall": "npm dedupe && npm prune && npm audit fix && subpkg run install",
+        "postinstall": "subpkg install",
         "update": "npx npm-check-updates -i -u",
+        "postupdate": "subpkg run update",
         "init": "run-s -c init:* git:version:inst lint",
         "init:gitflow": "git flow init -d -f && (git branch develop || echo skip) && git checkout develop",
-        "release": "npm run git:version:shell -- standard-version --tag-prefix \\\"\\\" --release-as $SemVer",
-        "release:as": "standard-version --no-verify --skip.tag --release-as",
-        "release:first": "standard-version --tag-prefix \"\" --first-release",
+        "init:husky": "husky install",
+        "release": "npm run git:version:shell -- npm run git:ifclean -- standard-version --release-as $SemVer",
+        "release:push": "npm run release && git push",
+        "release:first": "standard-version --first-release",
         "git:list": "git log --graph --pretty=\"format:%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset\" --abbrev-commit --decorate --date=short --color develop@{push}.. | devmoji --log --color",
         "git:amend": "run-s git:check && (git diff-index --cached --quiet HEAD || git commit --no-verify --amend -C HEAD)",
+        "git:amend:push": "npm run git:amend && git push --force",
         "git:check": "git-precommit-checks && lint-staged",
         "git:commit": "cross-env GIT_EDITOR=: git commit",
+        "git:commit:push": "npm run git:commit && git push",
+        "git:ifclean": "(git fetch --dry-run && git diff-index --quiet HEAD -- || chalk red bold \"Repo not clean, cannot continue\" && exit 0)  && chalk green bold \"Repo is clean, proceed\" && cross-env-shell",
         "git:version:install": "dotnet tool install -g gitversion.tool",
         "git:version:shell": "dotnet-gitversion > .git/version.json && env-cmd -f .git/version.json -x cross-env-shell",
-        "git:feature:start": "cross-env git flow feature start",
-        "git:feature:finish": "npm run git:version:shell -- 'npm run release:as $SemVer && git flow feature finish'",
-        "git:release:start": "npm run git:version:shell -- 'git flow release start $MajorMinorPatch'",
-        "git:release:finish": "npm run git:version:shell -- 'npm run release:as $MajorMinorPatch && git flow release finish -T $MajorMinorPatch -m Release'",
-        "git:hotfix:start": "cross-env git flow hotfix start from-$npm_package_version",
-        "git:hotfix:finish": "npm run git:version:shell -- 'npm run release:as $MajorMinorPatch && git flow hotfix finish -T $MajorMinorPatch -m Hotfix'",
-        "git:bugfix:start": "cross-env git flow bugfix start",
-        "git:bugfix:finish": "npm run git:version:shell -- 'npm run release:as $SemVer && git flow bugfix finish'"
+        "flow:feature:start": "npm run git:ifclean -- git flow feature start",
+        "flow:feature:finish": "npm run git:ifclean -- git flow feature finish",
+        "flow:release:start": "npm run git:version:shell -- npm run git:ifclean -- git flow release start $MajorMinorPatch'",
+        "flow:release:finish": "npm run git:ifclean -- git flow release finish -m Release",
+        "flow:hotfix:start": "npm run git:ifclean -- git flow hotfix start from-$npm_package_version",
+        "flow:hotfix:finish": "npm run git:ifclean -- git flow hotfix finish -m Hotfix'",
+        "flow:bugfix:start": "npm run git:ifclean -- git flow bugfix start",
+        "flow:bugfix:finish": "npm run git:ifclean -- git flow bugfix finish'"
     },
     "subPackages": [],
     "config": {
@@ -137,5 +153,17 @@
         "semi": false,
         "singleQuote": true,
         "insertPragma": true
+    },
+    "standard-version": {
+        "bumpFiles": [
+            {
+                "filename": "composer.json",
+                "type": "json"
+            },
+            {
+                "filename": "VERSION",
+                "type": "plain-text"
+            }
+        ]
     }
 }
