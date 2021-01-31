@@ -33,9 +33,11 @@ Deployment is handled with [lorisleiva/laravel-deployer](https://github.com/lori
 Some variables to set in Gitlab CI variable folder:
 
 -   `SSH_PRIVATE_KEY` to access target servers. You need to set corresponding public key on all your servers.
--   `HOSTNAME_SERVER_BETA` to deploy `develop` branch automaticaly
--   `HOSTNAME_SERVER_STAGING` to deploy `master` branch automaticaly
--   `HOSTNAME_SERVER_PRODUCTION` to deploy `master` branch **on demand**
+-   `DEPLOY_BETA` to deploy `develop` and `feature` branches automaticaly to `DEPLOY_BETA` url
+-   `DEPLOY_STAGING` to deploy `master` and `release` branches automaticaly to `DEPLOY_STAGING` url
+-   `DEPLOY_PRODUCTION` to deploy `master` branch **on demand** to `DEPLOY_PRODUCTION` url
+
+_Nota:_ the `VERSION` file at repository root will automaticaly be updated with gitversion's `fullsemver` value on pipeline start
 
 ### Gitlab / Node
 
