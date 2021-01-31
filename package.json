@@ -72,7 +72,7 @@
         "git:version:shell": "dotnet-gitversion > .git/version.json && env-cmd -f .git/version.json -x cross-env-shell",
         "flow:feature:start": "npm run git:ifclean -- git flow feature start",
         "flow:feature:finish": "npm run git:ifclean -- git flow feature finish",
-        "flow:release:start": "npm run git:version:shell -- npm run git:ifclean -- git flow release start $MajorMinorPatch'",
+        "flow:release:start": "npm run git:version:shell -- npm run git:ifclean -- git flow release start $MajorMinorPatch",
         "flow:release:finish": "npm run git:ifclean -- git flow release finish -m Release",
         "flow:hotfix:start": "npm run git:ifclean -- git flow hotfix start from-$npm_package_version",
         "flow:hotfix:finish": "npm run git:ifclean -- git flow hotfix finish -m Hotfix'",
